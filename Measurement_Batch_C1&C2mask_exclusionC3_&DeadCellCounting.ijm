@@ -1,22 +1,16 @@
-// =================================================================================
+
 // Fiji ImageJ Macro: MASTER BATCH (Messung + Dead Cell Zählung)
 // 1. Zählt alle Zellen, tote Zellen und lebende Zellen (speichert ein globales CSV).
 // 2. Misst die Intensität (C1 & C2) NUR von den lebenden Zellen (speichert CSV pro Ordner).
-// =================================================================================
 
-// ==========================================
-// --- 1. DEINE PERSÖNLICHEN EINSTELLUNGEN ---
-// ==========================================
+
 minSize = 50;           
 maxSize = 400;           
-minCirc = 0.30;          // WICHTIG: 0.30 ist perfekt eingestellt für intakte Zellen
+minCirc = 0.30;         
 maxCirc = 0.80;          
 blurSigma = 2;           
 threshMethod = "Triangle"; 
 
-// ==========================================
-// --- AB HIER NICHTS MEHR ÄNDERN ---
-// ==========================================
 
 mainDir = getDirectory("Wähle den HAUPT-ORDNER aus (z.B. '2 clean data' oder 'batch 1')");
 
@@ -37,9 +31,9 @@ setBatchMode(false);
 showMessage("Fertig!", "Master-Batch abgeschlossen.\nDetails im Log-Fenster.");
 
 
-// ------------------------------------------
+
 // FUNKTION: Rekursive Suche nach Ordnern
-// ------------------------------------------
+
 function processFolder(folder) {
     list = getFileList(folder);
     hasImages = false;
@@ -59,9 +53,9 @@ function processFolder(folder) {
     }
 }
 
-// ------------------------------------------
+
 // FUNKTION: Analyse und Messung pro Ordner
-// ------------------------------------------
+
 function analyzeFolder(inputDir) {
     run("Clear Results");
     roiManager("reset");
