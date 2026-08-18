@@ -26,9 +26,9 @@ setBatchMode(false);
 showMessage("Fertig!", "Alle Ordner wurden verarbeitet und die Ergebnisse wurden als CSV gespeichert.\n\nSiehe Log-Fenster für Details.");
 
 
-// ------------------------------------------
+
 // FUNKTION: Sucht nach Bildern oder weiteren Unterordnern
-// ------------------------------------------
+
 function processFolder(folder) {
     list = getFileList(folder);
     hasImages = false;
@@ -53,9 +53,9 @@ function processFolder(folder) {
     }
 }
 
-// ------------------------------------------
+
 // FUNKTION: Führt die eigentliche Messung durch
-// ------------------------------------------
+
 function analyzeFolder(inputDir) {
     run("Clear Results");
     roiManager("reset");
