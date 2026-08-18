@@ -1,0 +1,111 @@
+
+// 1. Ordner abfragen
+inputDir = getDirectory("Wähle den Input-Ordner mit den ROH-Bildern (.nd2)");
+outputDir = getDirectory("Wähle den HAUPT-Output-Ordner (hier werden die Unterordner erstellt)");
+
+// 2. Dialog für Einstellungen anzeigen
+Dialog.create("Verarbeitungs-Optionen");
+Dialog.addNumber("Background Subtraction Radius (Rolling Ball, 0 zum Deaktivieren):", 10);
+Dialog.show();
+
+rollingRadius = Dialog.getNumber();
+
+// 4. Liste aller Bilder abrufen
+list = getFileList(inputDir);
+
+// 5. Batch-Modus aktivieren (arbeitet unsichtbar & extrem schnell im Hintergrund)
+setBatchMode(true);
+print("\\Clear");
+print("Starte Batch-Pre-Processing mit automatischen Unterordnern...");
+
+// 6. Schleife für alle unterstützten Bilder
+for (i = 0; i < list.length; i++) {
+    if (endsWith(list[i], ".tif") || endsWith(list[i], ".TIF") || endsWith(list[i], ".nd2") || endsWith(list[i], ".czi")) {
+        
+        path = inputDir + list[i];
+        
+        // Dateiname ohne Endung extrahieren für den Ordnernamen
+        baseName = list[i];
+        dotIndex = lastIndexOf(baseName, ".");
+        if (dotIndex > 0) {
+            baseName = substring(baseName, 0, dotIndex);
+        }
+        
+        // Unterordner für diese Datei erstellen!
+        fileOutDir = outputDir + baseName + File.separator;
+        if (!File.exists(fileOutDir)) {
+            File.makeDirectory(fileOutDir);
+        }
+        
+        // --- BIO-FORMATS INITIALISIEREN ---
+        run("Bio-Formats Macro Extensions");
+        Ext.setId(path);
+        Ext.getSeriesCount(seriesCount);
+        
+        print("Verarbeite Datei: " + list[i] + " -> Erstelle Ordner: " + baseName);
+        
+        // Schleife über alle Series in der Datei
+        for (s = 0; s < seriesCount; s++) {
+            showProgress(s, seriesCount);
+            
+            // Serie auswählen und öffnen
+            Ext.setSeries(s);
+            Ext.openImagePlus(path);
+            imgTitle = getTitle();
+            
+            // --- A. Z-PROJEKTION (Maximum Intensity) ---
+            run("Z Project...", "projection=[Max Intensity]");
+            mipTitle = getTitle();
+            
+            // Original-Z-Stack schließen (spart enorm viel Arbeitsspeicher!)
+            selectWindow(imgTitle);
+            close(); 
+            
+            // --- B. KANÄLE TRENNEN ---
+            run("Split Channels");
+            
+            ch1Title = "C1-" + mipTitle;
+            ch2Title = "C2-" + mipTitle;
+            
+            // Suffix für Dateiname falls mehrere Series vorhanden sind
+            seriesSuffix = "";
+            if (seriesCount > 1) {
+                seriesNum = s + 1;
+                if (seriesNum < 10) {
+                    seriesSuffix = "_s0" + seriesNum;
+                } else {
+                    seriesSuffix = "_s" + seriesNum;
+                }
+            }
+            
+            // --- C. BEARBEITUNG KANAL 1 ---
+            if (isOpen(ch1Title)) {
+                selectWindow(ch1Title);
+                
+                if (rollingRadius > 0) {
+                    run("Subtract Background...", "rolling=" + rollingRadius);
+                }
+                
+                // Speichern im EIGENEN UNTERORDNER
+                saveAs("Tiff", fileOutDir + "C1_" + baseName + seriesSuffix + ".tif");
+                close(); 
+            }
+            
+            // --- D. BEARBEITUNG KANAL 2 ---
+            if (isOpen(ch2Title)) {
+                selectWindow(ch2Title);
+                
+                if (rollingRadius > 0) {
+                    run("Subtract Background...", "rolling=" + rollingRadius);
+                }
+                
+                // Speichern im EIGENEN UNTERORDNER
+                saveAs("Tiff", fileOutDir + "C2_" + baseName + seriesSuffix + ".tif");
+                close();
+            }
+        }
+    }
+}
+
+setBatchMode(false);
+showMessage("Fertig!", "Alle Dateien wurden verarbeitet und in eigene Unterordner einsortiert!");
